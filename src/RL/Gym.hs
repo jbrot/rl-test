@@ -1,12 +1,6 @@
-{-# LANGUAGE MultiParamTypeClasses, TypeFamilies #-}
-module RL.Gym where
+module RL.Gym ( module RL.Gym.Types
+              , module RL.Gym.Cartpole
+              ) where
 
-import Data.Word
-
-class Gym t m where
-    data Action t :: *
-    data Observation t :: *
-    step :: Action t -> t m (Observation t, Float, Bool)
-    reset :: t m ()
-    seed :: Maybe Word64 -> t m ()
-    run :: t m a -> m a
+import RL.Gym.Types
+import RL.Gym.Cartpole
