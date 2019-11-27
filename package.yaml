@@ -1,7 +1,7 @@
 name:                rl-test
 version:             0.1.0.0
 github:              "jbrot/rl-test"
-license:             BSD3
+license:             GPL-3
 author:              "Joshua Brot"
 maintainer:          "jbrot@umich.edu"
 copyright:           "2019(c) Joshua Brot"
@@ -36,16 +36,3 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
-    dependencies:
-    - rl-test
-
-tests:
-  rl-test-test:
-    main:                Spec.hs
-    source-dirs:         test
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - rl-test
