@@ -52,19 +52,19 @@ instance Gym Cartpole where
                                      , angle :: Float -- [-24, 24] degrees
                                      , velocityAtTip :: Float -- (-Inf, Inf)
                                      }
-    step a st0 = (st2, (convert st2, reward, dn))
+    step a st0 = ((convert st2, reward, dn), st2)
         where st1 = advance a st0
               dn = (abs . x $ st1) < x_threshold || (abs . theta $ st1) < theta_threshold_radians
               st2 = st1{done = dn}
               reward = if not dn || not (done st1) then 1 else 0
 
-    start = fmap fst . seed Nothing $ Cartpole 0 0 0 0 False Nothing
+    start = fmap snd . seed Nothing $ Cartpole 0 0 0 0 False Nothing
     seed s st = do
         g <- case s of
                Just v -> pure (pureMT v)
                Nothing -> liftIO newPureMT
-        pure (st{gen = Just g}, ())
-    reset st0 = (Cartpole p1 p2 p3 p4 False (Just g4), ())
+        pure ((), st{gen = Just g})
+    reset st0 = (CObs p1 p2 p3 p4, Cartpole p1 p2 p3 p4 False (Just g4))
         where g = fromJust . gen $ st0
               (p1,g1) = randomR (-0.05,0.05) g
               (p2,g2) = randomR (-0.05,0.05) g1
