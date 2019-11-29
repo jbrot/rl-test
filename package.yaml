@@ -21,7 +21,9 @@ description:         Please see the README on GitHub at <https://github.com/jbro
 
 dependencies:
 - base >= 4.7 && < 5
+- gloss
 - mersenne-random-pure64
+- monad-control
 - random
 - transformers
 
@@ -36,3 +38,5 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    dependencies:
+    - rl-test

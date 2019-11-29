@@ -2,11 +2,14 @@
 module RL.Gym.Types where
 
 import Data.Word
+import Graphics.Gloss (Picture)
 
-class Gym t m where
+
+class Gym t where
     data Action t :: *
     data Observation t :: *
-    step :: Action t -> t m (Observation t, Float, Bool)
-    reset :: t m ()
-    seed :: Maybe Word64 -> t m ()
-    run :: t m a -> m a
+    step :: Action t -> t -> (t, (Observation t, Float, Bool))
+    reset :: t -> (t, ())
+    render :: Float -> Float -> t -> Picture -- Width -> Height -> State -> Picture
+    seed :: Maybe Word64 -> t -> IO (t, ())
+    start :: IO t
