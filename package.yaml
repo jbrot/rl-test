@@ -22,10 +22,12 @@ description:         Please see the README on GitHub at <https://github.com/jbro
 dependencies:
 - base >= 4.7 && < 5
 - gloss
+- hmatrix
 - mersenne-random-pure64
 - monad-control
 - random
 - transformers
+- typelits-witnesses
 
 library:
   source-dirs: src
