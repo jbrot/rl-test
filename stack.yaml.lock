@@ -3,7 +3,21 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    cabal-file:
+      size: 7273
+      sha256: d0bcbd1b25673a7ddace866d3bce7bb67613cb390154a44d1d2034f0de375b0f
+    name: grenade
+    version: 0.1.0
+    git: https://github.com/HuwCampbell/grenade.git
+    pantry-tree:
+      size: 5394
+      sha256: 916900a8017670e5c422fba8a07ab57e4f9ba9bc131fd655303ecaad481e1061
+    commit: f729b291e40a9044d95d49d31bce3149a5b9d599
+  original:
+    git: https://github.com/HuwCampbell/grenade.git
+    commit: f729b291e40a9044d95d49d31bce3149a5b9d599
 snapshots:
 - completed:
     size: 524804

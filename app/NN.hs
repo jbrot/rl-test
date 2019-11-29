@@ -1,26 +1,14 @@
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DataKinds, GADTs #-}
 module NN where
 
 import GHC.TypeNats
+import Grenade
 import Numeric.LinearAlgebra.Static
 
-data NNet = NNet { l1 :: L 128 4
-                 , l2 :: L 2 128
-                 }
+type NNet = Network '[ FullyConnected 4 128, Relu, FullyConnected 128 2, Softmax ] '[ 'D1 4, 'D1 128, 'D1 128, 'D1 2, 'D1 2 ]
 
 randNN :: IO NNet
-randNN = NNet <$> rand <*> rand
-
-relu :: Double -> Double
-relu x
-  | x > 1 = 1
-  | x < -1 = -1
-  | otherwise = x
-
-softmax :: (KnownNat n) => R n -> R n
-softmax v = dvmap (/tot) scld
-    where scld = dvmap exp v
-          tot = scld <.> 1
+randNN = randomNetwork
 
 apply :: NNet -> R 4 -> R 2
-apply nn = softmax . ((l2 nn) #>) . dvmap relu . ((l1 nn) #>) 
+apply nn = (\(S1D v) -> v) . snd . runNetwork nn . S1D
