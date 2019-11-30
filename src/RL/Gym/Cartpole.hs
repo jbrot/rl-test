@@ -54,7 +54,7 @@ instance Gym Cartpole where
                                      }
     step a st0 = ((convert st2, reward, dn), st2)
         where st1 = advance a st0
-              dn = (abs . x $ st1) < x_threshold || (abs . theta $ st1) < theta_threshold_radians
+              dn = (abs . x $ st1) > x_threshold || (abs . theta $ st1) > theta_threshold_radians
               st2 = st1{done = dn}
               reward = if not dn || not (done st1) then 1 else 0
 

@@ -4,7 +4,7 @@ module Main where
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Control
 import Control.Monad.Trans.State
-import Data.Proxy
+import Data.VectorSpace
 import Grenade
 import Graphics.Gloss.Interface.IO.Simulate
 import Graphics.Gloss.Data.ViewPort
@@ -34,8 +34,17 @@ rnd = pure . translate (-300) (-200) . render 600 400 . gym
 
 rtf = realToFrac
 
-updateNet :: Monad m => StateT (IState Cartpole) m ()
-updateNet = modify (\s -> s{rollout = []})
+updateNet :: IState Cartpole -> IState Cartpole
+updateNet st = st{rollout = [], nn = applyUpdate (LearningParameters 0.05 0.5 0.005) (nn st) upd}
+  where gamma = 0.9
+        (_,gtrl) = foldl (\(v,ls) (r,g) -> let nv = gamma * v + r in (nv, (nv,g):ls)) (0, []) (rollout st)
+        average :: Fractional n => [n] -> n
+        average = (/) <$> sum <*> (realToFrac . length)
+        avg :: Float
+        avg = average (fmap fst gtrl) 
+        stdev :: Float
+        stdev = sqrt . average . fmap (\(x,_) -> (x - avg)^2) $ gtrl
+        upd = foldr (\(x,g) ag -> ag ^+^ ((rtf $ (avg - x) / (stdev + 1e-9)) *^ g)) zeroV gtrl
 
 stp :: ViewPort -> Float -> IState Cartpole -> IO (IState Cartpole)
 stp _ _ = execStateT $ do
@@ -45,10 +54,10 @@ stp _ _ = execStateT $ do
                                   0 -> CLeft
                                   1 -> CRight
                                   _ -> undefined)
-    o <- if d then liftIO (putStrLn "Reset") >> updateNet >> istate reset else pure o
+    o <- if d then get >>= \s -> liftIO (putStrLn $ "Reset: " ++ (show . length . rollout $ s)) >> modify updateNet >> istate reset else pure o
     modify (\s -> s{obs = o, rollout = (r,grad):(rollout s)})
 
 main :: IO ()
 main = do
     st <- defSt
-    simulateIO (InWindow "Cartpole" (600,400) (10,10)) (makeColor 1 1 1 1) 50 st rnd stp
+    simulateIO (InWindow "Cartpole" (600,400) (10,10)) (makeColor 1 1 1 1) 500 st rnd stp

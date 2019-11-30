@@ -61,3 +61,6 @@ instance (AdditiveGroup (Gradients as), AdditiveGroup (Gradient a), UpdateLayer 
 instance (VectorSpace (Gradients as), VectorSpace (Gradient a), Scalar(Gradient a) ~ Scalar(Gradients as), UpdateLayer a) => VectorSpace (Gradients (a ': as)) where
     type Scalar (Gradients (a ': as)) = Scalar (Gradients as)
     c *^ (a :/> b) = (c *^ a) :/> (c *^ b)
+instance VectorSpace () where
+    type Scalar () = Double
+    c *^ () = ()
