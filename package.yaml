@@ -29,6 +29,7 @@ dependencies:
 - random
 - singletons
 - transformers
+- vector
 
 library:
   source-dirs: src

@@ -5,6 +5,7 @@ import Control.Monad.IO.Class
 import Control.Monad.Trans.Control
 import Control.Monad.Trans.State
 import Data.Proxy
+import Grenade
 import Graphics.Gloss.Interface.IO.Simulate
 import Graphics.Gloss.Data.ViewPort
 import Numeric.LinearAlgebra.Static
@@ -16,6 +17,7 @@ import RL.Gym
 data IState g = IState { gym :: g
                        , obs :: Observation g
                        , nn :: NNet
+                       , rollout :: [(Float,Gradients NL)]
                        }
 
 istate :: (Monad m) => (g -> (a,g)) -> StateT (IState g) m a
@@ -25,24 +27,26 @@ istate f = do
     pure out
 
 defSt :: Gym g => IO (IState g)
-defSt = fmap reset start >>= \(o, g) -> IState g o <$> randNN
+defSt = fmap reset start >>= \(o, g) -> IState g o <$> randNN <*> pure []
 
 rnd :: Gym g => IState g -> IO Picture
 rnd = pure . translate (-300) (-200) . render 600 400 . gym
 
 rtf = realToFrac
 
+updateNet :: Monad m => StateT (IState Cartpole) m ()
+updateNet = modify (\s -> s{rollout = []})
+
 stp :: ViewPort -> Float -> IState Cartpole -> IO (IState Cartpole)
 stp _ _ = execStateT $ do
     CObs x1 x2 x3 x4 <- obs <$> get
-    probs <- flip apply (vec4 (rtf x1) (rtf x2) (rtf x3) (rtf x4)) . nn <$> get
-    act <- flip fmap (sample probs) $ \c -> case c of
-                                    0 -> CLeft
-                                    1 -> CRight
-                                    otherwise -> undefined
-    (o, r, d) <- istate (step act)
-    o <- if d then liftIO (putStrLn "Reset") >> istate reset else pure o
-    modify (\s -> s{obs = o})
+    (act, grad) <- flip apply (vec4 (rtf x1) (rtf x2) (rtf x3) (rtf x4)) . nn =<< get
+    (o, r, d) <- istate (step $ case act of
+                                  0 -> CLeft
+                                  1 -> CRight
+                                  _ -> undefined)
+    o <- if d then liftIO (putStrLn "Reset") >> updateNet >> istate reset else pure o
+    modify (\s -> s{obs = o, rollout = (r,grad):(rollout s)})
 
 main :: IO ()
 main = do
