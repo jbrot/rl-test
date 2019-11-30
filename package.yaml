@@ -30,6 +30,7 @@ dependencies:
 - singletons
 - transformers
 - vector
+- vector-space
 
 library:
   source-dirs: src
