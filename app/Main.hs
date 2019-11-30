@@ -5,10 +5,6 @@ import Control.Monad.IO.Class
 import Control.Monad.Trans.Control
 import Control.Monad.Trans.State
 import Data.Proxy
-import Data.Type.Equality ((:~:)(..))
-import GHC.TypeLits.Compare (isLE)
-import GHC.TypeLits.Witnesses
-import GHC.TypeNats
 import Graphics.Gloss.Interface.IO.Simulate
 import Graphics.Gloss.Data.ViewPort
 import Numeric.LinearAlgebra.Static
@@ -36,17 +32,6 @@ rnd = pure . translate (-300) (-200) . render 600 400 . gym
 
 rtf = realToFrac
 
-sample :: (MonadIO m, KnownNat n, 1 <= n) => R n -> m Int
-sample v = fmap (go v) . liftIO . randomRIO $ (0,1)
-    where go :: forall n1. (KnownNat n1, 1 <= n1) => R n1 -> Double -> Int
-          go vec v = if v < h
-                        then 0
-                        else case (SNat :: SNat n1) %- (SNat :: SNat 1) of
-                               SNat -> case isLE (Proxy :: Proxy 1) t of
-                                         Just Refl -> 1 + go t (v - h)
-                                         Nothing -> 0
-              where (h,t) = headTail vec
-
 stp :: ViewPort -> Float -> IState Cartpole -> IO (IState Cartpole)
 stp _ _ = execStateT $ do
     CObs x1 x2 x3 x4 <- obs <$> get
@@ -54,6 +39,7 @@ stp _ _ = execStateT $ do
     act <- flip fmap (sample probs) $ \c -> case c of
                                     0 -> CLeft
                                     1 -> CRight
+                                    otherwise -> undefined
     (o, r, d) <- istate (step act)
     o <- if d then liftIO (putStrLn "Reset") >> istate reset else pure o
     modify (\s -> s{obs = o})

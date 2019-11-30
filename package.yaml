@@ -27,8 +27,8 @@ dependencies:
 - mersenne-random-pure64
 - monad-control
 - random
+- singletons
 - transformers
-- typelits-witnesses
 
 library:
   source-dirs: src
@@ -41,5 +41,6 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -Werror=incomplete-patterns
     dependencies:
     - rl-test
