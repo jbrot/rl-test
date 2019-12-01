@@ -17,6 +17,7 @@ import System.Random
 
 type NL = '[ FullyConnected 4 128, Relu, FullyConnected 128 2, Softmax ]
 type NNet = Network NL '[ 'D1 4, 'D1 128, 'D1 128, 'D1 2, 'D1 2 ]
+type Grad = Gradients NL
 
 randNN :: IO NNet
 randNN = randomNetwork
@@ -33,7 +34,7 @@ sample v = fmap (go v) . liftIO . randomRIO $ (0,1)
               where (h,t) = headTail vec
 
 apply :: MonadIO m => NNet -> R 4 -> m (Int, Gradients NL)
-apply nn v = fmap (\t -> (t, fst . runGradient nn tape . S1D . fromJust . create . flip V.unsafeUpd [(t,1)] $ V.replicate 2 0)) (sample o)
+apply nn v = fmap (\t -> (t, fst . runGradient nn tape . S1D . fromJust . create . flip V.unsafeUpd [(t,1 / ((unwrap v) V.! t))] $ V.replicate 2 0)) (sample o)
     where (tape, S1D o) = runNetwork nn (S1D v)
 
 -- Orphan instances to make Gradients a vector space.
