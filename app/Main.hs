@@ -4,7 +4,6 @@ module Main where
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Trans.State
-import Data.VectorSpace
 import Grenade
 import Grenade.Exts
 import Graphics.Gloss.Interface.IO.Simulate
@@ -20,7 +19,7 @@ data IState g = IState { gym :: g
                        , obs :: Observation g
                        , nn :: NNet
                        , rollout :: [(Float,Gradients NL)]
-                       , adam :: Adam NL
+                       , adam :: Adam (Gradients NL)
                        , episode :: Int
                        , avg :: Float
                        }
@@ -37,6 +36,7 @@ defSt = fmap reset start >>= \(o, g) -> IState g o <$> randNN <*> pure [] <*> pu
 rnd :: Gym g => IState g -> IO Picture
 rnd = pure . translate (-300) (-200) . render 600 400 . gym
 
+rtf :: (Real a, Fractional b) => a -> b
 rtf = realToFrac
 
 updateNet :: IState Cartpole -> IState Cartpole
@@ -49,7 +49,7 @@ updateNet st = st{rollout = [], adam = ad', nn = nn'}
         avg = average (fmap fst gtrl) 
         stdev :: Float
         stdev = sqrt . average . fmap (\(x,_) -> (x - avg)^2) $ gtrl
-        upd = foldr (\(x,g) ag -> ag ^+^ ((rtf $ (avg - x) / (stdev + 1e-9)) *^ g)) zeroV gtrl
+        upd = foldr (\(x,g) ag -> ag + ((negate . rtf $ (x - avg) / (stdev + 1e-9)) * g)) (rtf 0) gtrl
         (ad', nn') = runAdam (adam st) upd (nn st)
 
 resetEp :: MonadIO m => StateT (IState Cartpole) m (Observation Cartpole)

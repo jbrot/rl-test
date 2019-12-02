@@ -27,12 +27,10 @@ dependencies:
 - hmatrix
 - mersenne-random-pure64
 - monad-control
-- mono-traversable
 - random
 - singletons
 - transformers
 - vector
-- vector-space
 
 library:
   source-dirs: src

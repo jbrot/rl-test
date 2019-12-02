@@ -2,7 +2,6 @@
 module Grenade.Exts.Layer where
 
 import Data.Singletons.TypeLits
-import Data.VectorSpace
 import GHC.Types (Constraint)
 import Grenade
 import Grenade.Exts.Gradient
@@ -11,7 +10,7 @@ class UpdateLayer x => UpdateLayerRaw x where
     runUpdateRaw :: Gradient x -> x -> x
 
 instance (KnownNat i, KnownNat o) => UpdateLayerRaw (FullyConnected i o) where
-    runUpdateRaw d (FullyConnected a b) = FullyConnected (d ^+^ a) b
+    runUpdateRaw d (FullyConnected a b) = FullyConnected (d + a) b
 instance UpdateLayerRaw (Relu) where
     runUpdateRaw _ _ = Relu
 instance UpdateLayerRaw (Softmax) where

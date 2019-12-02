@@ -31,6 +31,9 @@ sample v = fmap (go v) . liftIO . randomRIO $ (0,1)
                                          SFalse -> 0
               where (h,t) = headTail vec
 
+seedVector :: (KnownNat n, (1 <=? n) ~ 'True) => MonadIO m => R n -> m (Int, R n)
+seedVector v = fmap (\t -> (t, fromJust . create . flip V.unsafeUpd [(t, 1 / ((unwrap v) V.! t))] $ V.replicate (size v) 0)) (sample v)
+
 apply :: MonadIO m => NNet -> R 4 -> m (Int, Gradients NL)
-apply nn v = fmap (\t -> (t, fst . runGradient nn tape . S1D . fromJust . create . flip V.unsafeUpd [(t,1 / ((unwrap v) V.! t))] $ V.replicate 2 0)) (sample o)
+apply nn v = fmap (fmap (fst . runGradient nn tape . S1D)) (seedVector o)
     where (tape, S1D o) = runNetwork nn (S1D v)

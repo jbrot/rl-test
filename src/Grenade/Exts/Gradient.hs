@@ -1,65 +1,106 @@
 {-# LANGUAGE DataKinds, FlexibleContexts, FlexibleInstances, TypeFamilies, TypeOperators, UndecidableInstances #-}
 module Grenade.Exts.Gradient where
 
-import Data.Maybe (fromJust)
-import Data.MonoTraversable (MonoFunctor(..), Element)
 import Data.Singletons.TypeLits
-import Data.VectorSpace
 import Grenade
 import Numeric.LinearAlgebra.Static
-import qualified Numeric.LinearAlgebra as L
-import qualified Numeric.LinearAlgebra.Devel as L
 
-class MonoFunctor f => MonoApplicative f where
-    opure :: Element f -> f
-    oliftA2 :: (Element f -> Element f -> Element f) -> f -> f -> f
+instance (KnownNat i, KnownNat o) => Num (FullyConnected' i o) where
+    (FullyConnected' a b) + (FullyConnected' a2 b2) = FullyConnected' (a + a2) (b + b2)
+    (FullyConnected' a b) * (FullyConnected' a2 b2) = FullyConnected' (a * a2) (b * b2)
+    abs (FullyConnected' a b) = FullyConnected' (abs a) (abs b)
+    signum (FullyConnected' a b) = FullyConnected' (signum a) (signum b)
+    fromInteger n = FullyConnected' (fromInteger n) (fromInteger n)
+    negate (FullyConnected' a b) = FullyConnected' (negate a) (negate b)
+instance (KnownNat i, KnownNat o) => Fractional (FullyConnected' i o) where
+    recip (FullyConnected' a b) = FullyConnected' (recip a) (recip b)
+    fromRational r = FullyConnected' (fromRational r) (fromRational r)
+instance (KnownNat i, KnownNat o) => Floating (FullyConnected' i o) where
+    pi = FullyConnected' pi pi
+    exp (FullyConnected' a b) = FullyConnected' (exp a) (exp b)
+    log (FullyConnected' a b) = FullyConnected' (log a) (log b)
+    sin (FullyConnected' a b) = FullyConnected' (sin a) (sin b)
+    cos (FullyConnected' a b) = FullyConnected' (cos a) (cos b)
+    asin (FullyConnected' a b) = FullyConnected' (asin a) (asin b)
+    acos (FullyConnected' a b) = FullyConnected' (acos a) (acos b)
+    atan (FullyConnected' a b) = FullyConnected' (atan a) (atan b)
+    sinh (FullyConnected' a b) = FullyConnected' (sinh a) (sinh b)
+    cosh (FullyConnected' a b) = FullyConnected' (cosh a) (cosh b)
+    asinh (FullyConnected' a b) = FullyConnected' (asinh a) (asinh b)
+    acosh (FullyConnected' a b) = FullyConnected' (acosh a) (acosh b)
+    atanh (FullyConnected' a b) = FullyConnected' (atanh a) (atanh b)
 
-zipMats :: (KnownNat i, KnownNat o) => (Double -> Double -> Double) -> L i o -> L i o -> L i o
-zipMats f a b = fromJust . create . L.reshape (snd $ size a) $ L.zipVectorWith f (L.flatten $ extract a) (L.flatten $ extract b)
+instance Num (Gradients '[]) where
+    GNil + GNil = GNil
+    GNil * GNil = GNil
+    abs GNil = GNil
+    signum GNil = GNil
+    fromInteger n = GNil
+    negate GNil = GNil
+instance Fractional (Gradients '[]) where
+    fromRational r = GNil
+    recip GNil = GNil
+instance Floating (Gradients '[]) where
+    pi = GNil
+    exp GNil = GNil
+    log GNil = GNil
+    sin GNil = GNil
+    cos GNil = GNil
+    asin GNil = GNil
+    acos GNil = GNil
+    atan GNil = GNil
+    sinh GNil = GNil
+    cosh GNil = GNil
+    asinh GNil = GNil
+    acosh GNil = GNil
+    atanh GNil = GNil
 
+instance (Num (Gradients as), Num (Gradient a), UpdateLayer a) => Num (Gradients (a ': as)) where
+    (a :/> b) + (a2 :/> b2) = (a + a2) :/> (b + b2)
+    (a :/> b) * (a2 :/> b2) = (a * a2) :/> (b * b2)
+    abs (a :/> b) = (abs a) :/> (abs b)
+    signum (a :/> b) = (signum a) :/> (signum b)
+    fromInteger n = (fromInteger n) :/> (fromInteger n)
+    negate (a :/> b) = (negate a) :/> (negate b)
+instance (Fractional (Gradients as), Fractional (Gradient a), UpdateLayer a) => Fractional (Gradients (a ': as)) where
+    fromRational r = (fromRational r) :/> (fromRational r)
+    recip (a :/> b) = (recip a) :/> (recip b)
+instance (Floating (Gradients as), Floating (Gradient a), UpdateLayer a) => Floating (Gradients (a ': as)) where
+    pi = pi :/> pi
+    exp (a :/> b) = (exp a) :/> (exp b)
+    log (a :/> b) = (log a) :/> (log b)
+    sin (a :/> b) = (sin a) :/> (sin b)
+    cos (a :/> b) = (cos a) :/> (cos b)
+    asin (a :/> b) = (asin a) :/> (asin b)
+    acos (a :/> b) = (acos a) :/> (acos b)
+    atan (a :/> b) = (atan a) :/> (atan b)
+    sinh (a :/> b) = (sinh a) :/> (sinh b)
+    cosh (a :/> b) = (cosh a) :/> (cosh b)
+    asinh (a :/> b) = (asinh a) :/> (asinh b)
+    acosh (a :/> b) = (acosh a) :/> (acosh b)
+    atanh (a :/> b) = (atanh a) :/> (atanh b)
 
-type instance Element (FullyConnected' i o) = Double
-instance (KnownNat i, KnownNat o) => MonoFunctor (FullyConnected' i o) where
-    omap f (FullyConnected' b a)  = FullyConnected' (dvmap f b) (dmmap f a)
-instance (KnownNat i, KnownNat o) => MonoApplicative (FullyConnected' i o) where
-    opure c = FullyConnected' (konst c) (konst c)
-    oliftA2 f (FullyConnected' a b) (FullyConnected' a2 b2) =  FullyConnected' (zipWithVector f a a2) (zipMats f b b2)
-instance (KnownNat i, KnownNat o) => AdditiveGroup (FullyConnected' i o) where
-    zeroV = opure 0
-    (^+^) = oliftA2 (+)
-    negateV = omap negate
-instance (KnownNat i, KnownNat o) => VectorSpace (FullyConnected' i o) where
-    type Scalar (FullyConnected' i o) = Double
-    c *^ v = omap (c *) v
-
-type instance Element (Gradients '[]) = Double
-instance MonoFunctor (Gradients '[]) where
-    omap f GNil = GNil
-instance MonoApplicative (Gradients '[]) where
-    opure _ = GNil
-    oliftA2 _ GNil GNil = GNil
-
-type instance Element (Gradients (a ': as)) = Element (Gradient a)
-instance (MonoFunctor (Gradients as), MonoFunctor (Gradient a), UpdateLayer a, Element (Gradients as) ~ Element (Gradient a)) => MonoFunctor (Gradients (a ': as)) where
-    omap f (a :/> b) = (omap f a) :/> (omap f b)
-instance (MonoApplicative (Gradients as), MonoApplicative (Gradient a), UpdateLayer a, Element (Gradients as) ~ Element (Gradient a)) => MonoApplicative (Gradients (a ': as)) where
-    opure c = (opure c) :/> (opure c)
-    oliftA2 f (a :/> b) (a2 :/> b2) = (oliftA2 f a a2) :/> (oliftA2 f b b2)
-
-instance (MonoApplicative (Gradients as), Num (Element (Gradients as))) => AdditiveGroup (Gradients as) where
-    zeroV = opure 0
-    (^+^) = oliftA2 (+)
-    negateV = omap negate
-instance (AdditiveGroup (Gradients as), MonoFunctor (Gradients as), Num (Element (Gradients as))) => VectorSpace (Gradients as) where
-    type Scalar (Gradients as) = Element (Gradients as)
-    c *^ v = omap (c *) v
-
-type instance Element () = Double
-instance MonoFunctor () where
-    omap f () = ()
-instance MonoApplicative () where
-    opure _ = ()
-    oliftA2 _ () () = ()
-instance VectorSpace () where
-    type Scalar () = Double
-    c *^ v = omap (c *) v
+instance Num () where
+    () + () = ()
+    () * () = ()
+    abs () = ()
+    signum () = ()
+    fromInteger n = ()
+    negate () = ()
+instance Fractional () where
+    fromRational r = ()
+    recip () = ()
+instance Floating () where
+    pi = ()
+    exp () = ()
+    log () = ()
+    sin () = ()
+    cos () = ()
+    asin () = ()
+    acos () = ()
+    atan () = ()
+    sinh () = ()
+    cosh () = ()
+    asinh () = ()
+    acosh () = ()
+    atanh () = ()
