@@ -22,4 +22,4 @@ type family All (c :: * -> Constraint) (as :: [*]) :: Constraint where
 
 applyRaw :: All UpdateLayerRaw layers => Gradients layers -> Network layers shapes -> Network layers shapes
 applyRaw GNil NNil = NNil
-applyRaw (g :/> gs) (n :~> ns) = (runUpdateRaw g n :~> ns)
+applyRaw (g :/> gs) (n :~> ns) = (runUpdateRaw g n :~> applyRaw gs ns)

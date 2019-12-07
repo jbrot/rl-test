@@ -15,7 +15,6 @@ import System.Random
 
 type NL = '[ FullyConnected 4 128, Relu, FullyConnected 128 2, Softmax ]
 type NNet = Network NL '[ 'D1 4, 'D1 128, 'D1 128, 'D1 2, 'D1 2 ]
-type Grad = Gradients NL
 
 randNN :: IO NNet
 randNN = randomNetwork
